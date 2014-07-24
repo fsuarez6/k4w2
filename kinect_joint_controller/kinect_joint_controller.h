@@ -1,12 +1,13 @@
-//------------------------------------------------------------------------------
-// <copyright file="BodyBasics.h" company="Microsoft">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
-
 #pragma once
 
+#include "udp_client.h"
+
+#include <cstdlib>
+#include <cstring>
+#include <sstream>
+
 #include "resource.h"
+
 
 class KinectJointController
 {
@@ -78,6 +79,13 @@ private:
     ID2D1SolidColorBrush*   m_pBrushHandClosed;
     ID2D1SolidColorBrush*   m_pBrushHandOpen;
     ID2D1SolidColorBrush*   m_pBrushHandLasso;
+
+	// UDP socket staff
+	void					SetupUDP();
+	UdpClient				*udp_client;
+	/*boost::asio::io_service		io_service_;
+	udp::socket					socket_;
+	udp::endpoint				sender_endpoint_;*/
 
     /// <summary>
     /// Main processing function

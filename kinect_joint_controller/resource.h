@@ -1,12 +1,6 @@
-//------------------------------------------------------------------------------
-// <copyright file="Resource.h" company="Microsoft">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
-
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by BodyBasics.rc
+// Used by resources.rc
 //
 #define IDI_APP                         100
 #define IDD_APP                         100

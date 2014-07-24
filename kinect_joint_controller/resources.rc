@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// <copyright file="BodyBasics.rc" company="Microsoft">
+// <copyright file="resources.rc" company="Microsoft">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
 //------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ IDI_APP                 ICON                    "app.ico"
 IDD_APP DIALOGEX 0, 0, 512, 436
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTROLPARENT | WS_EX_APPWINDOW
-CAPTION "Body Basics"
+CAPTION "Kinect Joint Controller"
 CLASS "BodyBasicsAppDlgWndClass"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN

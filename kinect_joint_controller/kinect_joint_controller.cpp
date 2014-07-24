@@ -1,18 +1,23 @@
-//------------------------------------------------------------------------------
-// <copyright file="BodyBasics.cpp" company="Microsoft">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
-
 #include "stdafx.h"
 #include <strsafe.h>
 #include "resource.h"
 #include "kinect_joint_controller.h"
 
+
 static const float c_JointThickness = 3.0f;
 static const float c_TrackedBoneThickness = 6.0f;
 static const float c_InferredBoneThickness = 1.0f;
 static const float c_HandSize = 30.0f;
+
+struct SkeletonMsg
+{
+	JointType JointType[JointType_Count];
+	CameraSpacePoint Position[JointType_Count];
+	Vector4 Orientation[JointType_Count];
+	TrackingState TrackingState[JointType_Count];
+	HandState leftHandState;
+	HandState rightHandState;
+};
 
 /// <summary>
 /// Entry point for the application
@@ -84,6 +89,9 @@ KinectJointController::~KinectJointController()
         m_pKinectSensor->Close();
     }
 
+	// Close socket
+	udp_client->close_socket();
+
     SafeRelease(m_pKinectSensor);
 }
 
@@ -122,6 +130,16 @@ int KinectJointController::Run(HINSTANCE hInstance, int nCmdShow)
     // Show window
     ShowWindow(hWndApp, nCmdShow);
 
+	// Initialize socket client
+	udp_client = new UdpClient("10.243.44.150", 6565);
+	if (udp_client->create() < 0)
+	{
+		std::wstringstream msg;
+		msg << L"Failed to create UDP Socket. Error number: " << WSAGetLastError();
+		MessageBox(NULL, msg.str().c_str(), L"UDP Socket", MB_OK |
+			MB_ICONINFORMATION);
+	}
+
     // Main message loop
     while (WM_QUIT != msg.message)
     {
@@ -141,6 +159,14 @@ int KinectJointController::Run(HINSTANCE hInstance, int nCmdShow)
     }
 
     return static_cast<int>(msg.wParam);
+}
+
+/// <summary>
+/// Create upd socket to send the data
+/// </summary>
+void KinectJointController::SetupUDP()
+{
+
 }
 
 /// <summary>
@@ -350,15 +376,26 @@ void KinectJointController::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppB
 						HRESULT hr_rot = pBody->GetJointOrientations(_countof(orientations), orientations);
 						if (SUCCEEDED(hr) && SUCCEEDED(hr_rot))
                         {
+							SkeletonMsg udp_msg;
                             for (int j = 0; j < _countof(joints); ++j)
                             {
                                 jointPoints[j] = BodyToScreen(joints[j].Position, width, height);
+								// Populate the udp_msg
+								udp_msg.JointType[j] = joints[j].JointType;
+								udp_msg.Position[j] = joints[j].Position;
+								udp_msg.TrackingState[j] = joints[j].TrackingState;
+								udp_msg.Orientation[j] = orientations[j].Orientation;
                             }
 
                             DrawBody(joints, jointPoints);
 
                             DrawHand(leftHandState, jointPoints[JointType_HandLeft]);
                             DrawHand(rightHandState, jointPoints[JointType_HandRight]);
+
+							// TODO: Send Positions and Orientations throught UDP
+							udp_msg.leftHandState = leftHandState;
+							udp_msg.rightHandState = rightHandState;
+							udp_client->send((char*)&udp_msg);
                         }
                     }
                 }
