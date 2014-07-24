@@ -1,13 +1,15 @@
 #pragma once
 
-#include "udp_client.h"
-
 #include <cstdlib>
 #include <cstring>
 #include <sstream>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio.hpp>
 
 #include "resource.h"
 
+using boost::asio::ip::udp;
 
 class KinectJointController
 {
@@ -81,11 +83,10 @@ private:
     ID2D1SolidColorBrush*   m_pBrushHandLasso;
 
 	// UDP socket staff
-	void					SetupUDP();
-	UdpClient				*udp_client;
-	/*boost::asio::io_service		io_service_;
-	udp::socket					socket_;
-	udp::endpoint				sender_endpoint_;*/
+
+	boost::asio::io_service	io_service_;
+	udp::socket*			socket_;
+	udp::resolver::iterator asio_iterator_;
 
     /// <summary>
     /// Main processing function

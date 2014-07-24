@@ -9,15 +9,31 @@ static const float c_TrackedBoneThickness = 6.0f;
 static const float c_InferredBoneThickness = 1.0f;
 static const float c_HandSize = 30.0f;
 
+#pragma pack(1)
 struct SkeletonMsg
 {
-	JointType JointType[JointType_Count];
-	CameraSpacePoint Position[JointType_Count];
-	Vector4 Orientation[JointType_Count];
-	TrackingState TrackingState[JointType_Count];
-	HandState leftHandState;
-	HandState rightHandState;
+	u_short user_number;
+	u_short joint_type[JointType_Count];
+	u_short  tracking_state[JointType_Count];
+	float position_x[JointType_Count];
+	float position_y[JointType_Count];
+	float position_z[JointType_Count];
+	float orientation_x[JointType_Count];
+	float orientation_y[JointType_Count];
+	float orientation_z[JointType_Count];
+	float orientation_w[JointType_Count];
+	u_short  l_hand_state;
+	u_short  r_hand_state;
+	
+	template <typename Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+	ar & user_number;
+	ar & joint_type;
+	ar & tracking_state;
+	}
 };
+#pragma pack()
 
 /// <summary>
 /// Entry point for the application
@@ -89,9 +105,6 @@ KinectJointController::~KinectJointController()
         m_pKinectSensor->Close();
     }
 
-	// Close socket
-	udp_client->close_socket();
-
     SafeRelease(m_pKinectSensor);
 }
 
@@ -130,9 +143,13 @@ int KinectJointController::Run(HINSTANCE hInstance, int nCmdShow)
     // Show window
     ShowWindow(hWndApp, nCmdShow);
 
-	// Initialize socket client
-	udp_client = new UdpClient("10.243.44.150", 6565);
-	if (udp_client->create() < 0)
+	// TODO: Initialize socket client
+	socket_ = new udp::socket(io_service_, udp::endpoint(udp::v4(), 0));
+	udp::resolver resolver(io_service_);
+    udp::resolver::query query(udp::v4(), "10.243.44.150", "6565");
+    asio_iterator_ = resolver.resolve(query);
+	
+	if (1 < 0)
 	{
 		std::wstringstream msg;
 		msg << L"Failed to create UDP Socket. Error number: " << WSAGetLastError();
@@ -159,14 +176,6 @@ int KinectJointController::Run(HINSTANCE hInstance, int nCmdShow)
     }
 
     return static_cast<int>(msg.wParam);
-}
-
-/// <summary>
-/// Create upd socket to send the data
-/// </summary>
-void KinectJointController::SetupUDP()
-{
-
 }
 
 /// <summary>
@@ -351,8 +360,7 @@ void KinectJointController::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppB
             GetClientRect(GetDlgItem(m_hWnd, IDC_VIDEOVIEW), &rct);
             int width = rct.right;
             int height = rct.bottom;
-
-            for (int i = 0; i < nBodyCount; ++i)
+			for (int i = 0; i < nBodyCount; ++i)
             {
                 IBody* pBody = ppBodies[i];
                 if (pBody)
@@ -381,10 +389,15 @@ void KinectJointController::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppB
                             {
                                 jointPoints[j] = BodyToScreen(joints[j].Position, width, height);
 								// Populate the udp_msg
-								udp_msg.JointType[j] = joints[j].JointType;
-								udp_msg.Position[j] = joints[j].Position;
-								udp_msg.TrackingState[j] = joints[j].TrackingState;
-								udp_msg.Orientation[j] = orientations[j].Orientation;
+								udp_msg.joint_type[j] = joints[j].JointType;
+								udp_msg.position_x[j] = joints[j].Position.X;
+								udp_msg.position_y[j] = joints[j].Position.Y;
+								udp_msg.position_z[j] = joints[j].Position.Z;
+								udp_msg.tracking_state[j] = joints[j].TrackingState;
+								udp_msg.orientation_x[j] = orientations[j].Orientation.x;
+								udp_msg.orientation_y[j] = orientations[j].Orientation.y;
+								udp_msg.orientation_z[j] = orientations[j].Orientation.z;
+								udp_msg.orientation_w[j] = orientations[j].Orientation.w;
                             }
 
                             DrawBody(joints, jointPoints);
@@ -392,10 +405,25 @@ void KinectJointController::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppB
                             DrawHand(leftHandState, jointPoints[JointType_HandLeft]);
                             DrawHand(rightHandState, jointPoints[JointType_HandRight]);
 
-							// TODO: Send Positions and Orientations throught UDP
-							udp_msg.leftHandState = leftHandState;
-							udp_msg.rightHandState = rightHandState;
-							udp_client->send((char*)&udp_msg);
+							udp_msg.user_number = i + 1;
+							udp_msg.l_hand_state = leftHandState;
+							udp_msg.r_hand_state = rightHandState;
+
+							// Send all the information through UDP
+							std::vector<boost::asio::const_buffer> buffers;
+							buffers.push_back( boost::asio::buffer(&udp_msg.user_number, sizeof(udp_msg.user_number) ) );
+							buffers.push_back( boost::asio::buffer(&udp_msg.joint_type, sizeof(udp_msg.joint_type) ) );
+							buffers.push_back( boost::asio::buffer(&udp_msg.tracking_state, sizeof(udp_msg.tracking_state) ) );
+							buffers.push_back( boost::asio::buffer(&udp_msg.position_x, sizeof(udp_msg.position_x) ) );
+							buffers.push_back( boost::asio::buffer(&udp_msg.position_y, sizeof(udp_msg.position_y) ) );
+							buffers.push_back( boost::asio::buffer(&udp_msg.position_z, sizeof(udp_msg.position_z) ) );
+							buffers.push_back( boost::asio::buffer(&udp_msg.orientation_x, sizeof(udp_msg.orientation_x) ) );
+							buffers.push_back( boost::asio::buffer(&udp_msg.orientation_y, sizeof(udp_msg.orientation_y) ) );
+							buffers.push_back( boost::asio::buffer(&udp_msg.orientation_z, sizeof(udp_msg.orientation_z) ) );
+							buffers.push_back( boost::asio::buffer(&udp_msg.orientation_w, sizeof(udp_msg.orientation_w) ) );
+							buffers.push_back( boost::asio::buffer(&udp_msg.l_hand_state, sizeof(udp_msg.l_hand_state) ) );
+							buffers.push_back( boost::asio::buffer(&udp_msg.r_hand_state, sizeof(udp_msg.r_hand_state) ) );
+							socket_->send_to(buffers, *asio_iterator_);
                         }
                     }
                 }
