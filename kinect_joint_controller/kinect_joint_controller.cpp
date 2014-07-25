@@ -12,26 +12,18 @@ static const float c_HandSize = 30.0f;
 #pragma pack(1)
 struct SkeletonMsg
 {
-	u_short user_number;
-	u_short joint_type[JointType_Count];
-	u_short  tracking_state[JointType_Count];
-	float position_x[JointType_Count];
-	float position_y[JointType_Count];
-	float position_z[JointType_Count];
-	float orientation_x[JointType_Count];
-	float orientation_y[JointType_Count];
-	float orientation_z[JointType_Count];
-	float orientation_w[JointType_Count];
-	u_short  l_hand_state;
-	u_short  r_hand_state;
-	
-	template <typename Archive>
-	void serialize(Archive& ar, const unsigned int version)
-	{
-	ar & user_number;
-	ar & joint_type;
-	ar & tracking_state;
-	}
+  u_short user_number;
+  u_short joint_type[JointType_Count];
+  u_short  tracking_state[JointType_Count];
+  float position_x[JointType_Count];
+  float position_y[JointType_Count];
+  float position_z[JointType_Count];
+  float orientation_x[JointType_Count];
+  float orientation_y[JointType_Count];
+  float orientation_z[JointType_Count];
+  float orientation_w[JointType_Count];
+  u_short  l_hand_state;
+  u_short  r_hand_state;
 };
 #pragma pack()
 
@@ -45,41 +37,41 @@ struct SkeletonMsg
 /// <returns>status</returns>
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
-    UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(lpCmdLine);
+  UNREFERENCED_PARAMETER(hPrevInstance);
+  UNREFERENCED_PARAMETER(lpCmdLine);
 
-    KinectJointController application;
-    application.Run(hInstance, nCmdShow);
+  KinectJointController application;
+  application.Run(hInstance, nCmdShow);
 }
 
 /// <summary>
 /// Constructor
 /// </summary>
 KinectJointController::KinectJointController() :
-    m_hWnd(NULL),
-    m_nStartTime(0),
-    m_nLastCounter(0),
-    m_nFramesSinceUpdate(0),
-    m_fFreq(0),
-    m_nNextStatusTime(0),
-    m_pKinectSensor(NULL),
-    m_pCoordinateMapper(NULL),
-    m_pBodyFrameReader(NULL),
-    m_pD2DFactory(NULL),
-    m_pRenderTarget(NULL),
-    m_pBrushJointTracked(NULL),
-    m_pBrushJointInferred(NULL),
-    m_pBrushBoneTracked(NULL),
-    m_pBrushBoneInferred(NULL),
-    m_pBrushHandClosed(NULL),
-    m_pBrushHandOpen(NULL),
-    m_pBrushHandLasso(NULL)
+  m_hWnd(NULL),
+  m_nStartTime(0),
+  m_nLastCounter(0),
+  m_nFramesSinceUpdate(0),
+  m_fFreq(0),
+  m_nNextStatusTime(0),
+  m_pKinectSensor(NULL),
+  m_pCoordinateMapper(NULL),
+  m_pBodyFrameReader(NULL),
+  m_pD2DFactory(NULL),
+  m_pRenderTarget(NULL),
+  m_pBrushJointTracked(NULL),
+  m_pBrushJointInferred(NULL),
+  m_pBrushBoneTracked(NULL),
+  m_pBrushBoneInferred(NULL),
+  m_pBrushHandClosed(NULL),
+  m_pBrushHandOpen(NULL),
+  m_pBrushHandLasso(NULL)
 {
-    LARGE_INTEGER qpf = {0};
-    if (QueryPerformanceFrequency(&qpf))
-    {
-        m_fFreq = double(qpf.QuadPart);
-    }
+  LARGE_INTEGER qpf = {0};
+  if (QueryPerformanceFrequency(&qpf))
+  {
+    m_fFreq = double(qpf.QuadPart);
+  }
 }
   
 
@@ -88,24 +80,24 @@ KinectJointController::KinectJointController() :
 /// </summary>
 KinectJointController::~KinectJointController()
 {
-    DiscardDirect2DResources();
+  DiscardDirect2DResources();
 
-    // clean up Direct2D
-    SafeRelease(m_pD2DFactory);
+  // clean up Direct2D
+  SafeRelease(m_pD2DFactory);
 
-    // done with body frame reader
-    SafeRelease(m_pBodyFrameReader);
+  // done with body frame reader
+  SafeRelease(m_pBodyFrameReader);
 
-    // done with coordinate mapper
-    SafeRelease(m_pCoordinateMapper);
+  // done with coordinate mapper
+  SafeRelease(m_pCoordinateMapper);
 
-    // close the Kinect Sensor
-    if (m_pKinectSensor)
-    {
-        m_pKinectSensor->Close();
-    }
+  // close the Kinect Sensor
+  if (m_pKinectSensor)
+  {
+    m_pKinectSensor->Close();
+  }
 
-    SafeRelease(m_pKinectSensor);
+  SafeRelease(m_pKinectSensor);
 }
 
 /// <summary>
@@ -115,67 +107,61 @@ KinectJointController::~KinectJointController()
 /// <param name="nCmdShow">whether to display minimized, maximized, or normally</param>
 int KinectJointController::Run(HINSTANCE hInstance, int nCmdShow)
 {
-    MSG       msg = {0};
-    WNDCLASS  wc;
+  MSG    msg = {0};
+  WNDCLASS  wc;
 
-    // Dialog custom window class
-    ZeroMemory(&wc, sizeof(wc));
-    wc.style         = CS_HREDRAW | CS_VREDRAW;
-    wc.cbWndExtra    = DLGWINDOWEXTRA;
-    wc.hCursor       = LoadCursorW(NULL, IDC_ARROW);
-    wc.hIcon         = LoadIconW(hInstance, MAKEINTRESOURCE(IDI_APP));
-    wc.lpfnWndProc   = DefDlgProcW;
-    wc.lpszClassName = L"BodyBasicsAppDlgWndClass";
+  // Dialog custom window class
+  ZeroMemory(&wc, sizeof(wc));
+  wc.style     = CS_HREDRAW | CS_VREDRAW;
+  wc.cbWndExtra = DLGWINDOWEXTRA;
+  wc.hCursor     = LoadCursorW(NULL, IDC_ARROW);
+  wc.hIcon     = LoadIconW(hInstance, MAKEINTRESOURCE(IDI_APP));
+  wc.lpfnWndProc   = DefDlgProcW;
+  wc.lpszClassName = L"BodyBasicsAppDlgWndClass";
 
-    if (!RegisterClassW(&wc))
+  if (!RegisterClassW(&wc))
+  {
+    return 0;
+  }
+
+  // Create main application window
+  HWND hWndApp = CreateDialogParamW(
+    NULL,
+    MAKEINTRESOURCE(IDD_APP),
+    NULL,
+    (DLGPROC)KinectJointController::MessageRouter, 
+    reinterpret_cast<LPARAM>(this));
+
+  // Show window
+  ShowWindow(hWndApp, nCmdShow);
+
+  // Initialize socket client
+  socket_ = new udp::socket(m_ioService, udp::endpoint(udp::v4(), 0));
+  udp::resolver resolver(m_ioService);
+  udp::resolver::query query(udp::v4(), "10.243.44.150", "6565");
+  asio_iterator_ = resolver.resolve(query);
+  
+  // TODO: Notify when the socket creation fails
+  
+  // Main message loop
+  while (WM_QUIT != msg.message)
+  {
+    Update();
+
+    while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
     {
-        return 0;
+      // If a dialog message will be taken care of by the dialog proc
+      if (hWndApp && IsDialogMessageW(hWndApp, &msg))
+      {
+        continue;
+      }
+
+      TranslateMessage(&msg);
+      DispatchMessageW(&msg);
     }
+  }
 
-    // Create main application window
-    HWND hWndApp = CreateDialogParamW(
-        NULL,
-        MAKEINTRESOURCE(IDD_APP),
-        NULL,
-        (DLGPROC)KinectJointController::MessageRouter, 
-        reinterpret_cast<LPARAM>(this));
-
-    // Show window
-    ShowWindow(hWndApp, nCmdShow);
-
-	// TODO: Initialize socket client
-	socket_ = new udp::socket(io_service_, udp::endpoint(udp::v4(), 0));
-	udp::resolver resolver(io_service_);
-    udp::resolver::query query(udp::v4(), "10.243.44.150", "6565");
-    asio_iterator_ = resolver.resolve(query);
-	
-	if (1 < 0)
-	{
-		std::wstringstream msg;
-		msg << L"Failed to create UDP Socket. Error number: " << WSAGetLastError();
-		MessageBox(NULL, msg.str().c_str(), L"UDP Socket", MB_OK |
-			MB_ICONINFORMATION);
-	}
-
-    // Main message loop
-    while (WM_QUIT != msg.message)
-    {
-        Update();
-
-        while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
-        {
-            // If a dialog message will be taken care of by the dialog proc
-            if (hWndApp && IsDialogMessageW(hWndApp, &msg))
-            {
-                continue;
-            }
-
-            TranslateMessage(&msg);
-            DispatchMessageW(&msg);
-        }
-    }
-
-    return static_cast<int>(msg.wParam);
+  return static_cast<int>(msg.wParam);
 }
 
 /// <summary>
@@ -183,40 +169,40 @@ int KinectJointController::Run(HINSTANCE hInstance, int nCmdShow)
 /// </summary>
 void KinectJointController::Update()
 {
-    if (!m_pBodyFrameReader)
-    {
-        return;
-    }
+  if (!m_pBodyFrameReader)
+  {
+    return;
+  }
 
-    IBodyFrame* pBodyFrame = NULL;
+  IBodyFrame* pBodyFrame = NULL;
 
-    HRESULT hr = m_pBodyFrameReader->AcquireLatestFrame(&pBodyFrame);
+  HRESULT hr = m_pBodyFrameReader->AcquireLatestFrame(&pBodyFrame);
+
+  if (SUCCEEDED(hr))
+  {
+    INT64 nTime = 0;
+
+    hr = pBodyFrame->get_RelativeTime(&nTime);
+
+    IBody* ppBodies[BODY_COUNT] = {0};
 
     if (SUCCEEDED(hr))
     {
-        INT64 nTime = 0;
-
-        hr = pBodyFrame->get_RelativeTime(&nTime);
-
-        IBody* ppBodies[BODY_COUNT] = {0};
-
-        if (SUCCEEDED(hr))
-        {
-            hr = pBodyFrame->GetAndRefreshBodyData(_countof(ppBodies), ppBodies);
-        }
-
-        if (SUCCEEDED(hr))
-        {
-            ProcessBody(nTime, BODY_COUNT, ppBodies);
-        }
-
-        for (int i = 0; i < _countof(ppBodies); ++i)
-        {
-            SafeRelease(ppBodies[i]);
-        }
+      hr = pBodyFrame->GetAndRefreshBodyData(_countof(ppBodies), ppBodies);
     }
 
-    SafeRelease(pBodyFrame);
+    if (SUCCEEDED(hr))
+    {
+      ProcessBody(nTime, BODY_COUNT, ppBodies);
+    }
+
+    for (int i = 0; i < _countof(ppBodies); ++i)
+    {
+      SafeRelease(ppBodies[i]);
+    }
+  }
+
+  SafeRelease(pBodyFrame);
 }
 
 /// <summary>
@@ -229,24 +215,24 @@ void KinectJointController::Update()
 /// <returns>result of message processing</returns>
 LRESULT CALLBACK KinectJointController::MessageRouter(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    KinectJointController* pThis = NULL;
-    
-    if (WM_INITDIALOG == uMsg)
-    {
-        pThis = reinterpret_cast<KinectJointController*>(lParam);
-        SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
-    }
-    else
-    {
-        pThis = reinterpret_cast<KinectJointController*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
-    }
+  KinectJointController* pThis = NULL;
+  
+  if (WM_INITDIALOG == uMsg)
+  {
+    pThis = reinterpret_cast<KinectJointController*>(lParam);
+    SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
+  }
+  else
+  {
+    pThis = reinterpret_cast<KinectJointController*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
+  }
 
-    if (pThis)
-    {
-        return pThis->DlgProc(hWnd, uMsg, wParam, lParam);
-    }
+  if (pThis)
+  {
+    return pThis->DlgProc(hWnd, uMsg, wParam, lParam);
+  }
 
-    return 0;
+  return 0;
 }
 
 /// <summary>
@@ -259,36 +245,36 @@ LRESULT CALLBACK KinectJointController::MessageRouter(HWND hWnd, UINT uMsg, WPAR
 /// <returns>result of message processing</returns>
 LRESULT CALLBACK KinectJointController::DlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    UNREFERENCED_PARAMETER(wParam);
-    UNREFERENCED_PARAMETER(lParam);
+  UNREFERENCED_PARAMETER(wParam);
+  UNREFERENCED_PARAMETER(lParam);
 
-    switch (message)
+  switch (message)
+  {
+    case WM_INITDIALOG:
     {
-        case WM_INITDIALOG:
-        {
-            // Bind application window handle
-            m_hWnd = hWnd;
+      // Bind application window handle
+      m_hWnd = hWnd;
 
-            // Init Direct2D
-            D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pD2DFactory);
+      // Init Direct2D
+      D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pD2DFactory);
 
-            // Get and initialize the default Kinect sensor
-            InitializeDefaultSensor();
-        }
-        break;
-
-        // If the titlebar X is clicked, destroy app
-        case WM_CLOSE:
-            DestroyWindow(hWnd);
-            break;
-
-        case WM_DESTROY:
-            // Quit the main message pump
-            PostQuitMessage(0);
-            break;
+      // Get and initialize the default Kinect sensor
+      InitializeDefaultSensor();
     }
+    break;
 
-    return FALSE;
+    // If the titlebar X is clicked, destroy app
+    case WM_CLOSE:
+      DestroyWindow(hWnd);
+      break;
+
+    case WM_DESTROY:
+      // Quit the main message pump
+      PostQuitMessage(0);
+      break;
+  }
+
+  return FALSE;
 }
 
 /// <summary>
@@ -297,46 +283,46 @@ LRESULT CALLBACK KinectJointController::DlgProc(HWND hWnd, UINT message, WPARAM 
 /// <returns>indicates success or failure</returns>
 HRESULT KinectJointController::InitializeDefaultSensor()
 {
-    HRESULT hr;
+  HRESULT hr;
 
-    hr = GetDefaultKinectSensor(&m_pKinectSensor);
-    if (FAILED(hr))
-    {
-        return hr;
-    }
-
-    if (m_pKinectSensor)
-    {
-        // Initialize the Kinect and get coordinate mapper and the body reader
-        IBodyFrameSource* pBodyFrameSource = NULL;
-
-        hr = m_pKinectSensor->Open();
-
-        if (SUCCEEDED(hr))
-        {
-            hr = m_pKinectSensor->get_CoordinateMapper(&m_pCoordinateMapper);
-        }
-
-        if (SUCCEEDED(hr))
-        {
-            hr = m_pKinectSensor->get_BodyFrameSource(&pBodyFrameSource);
-        }
-
-        if (SUCCEEDED(hr))
-        {
-            hr = pBodyFrameSource->OpenReader(&m_pBodyFrameReader);
-        }
-
-        SafeRelease(pBodyFrameSource);
-    }
-
-    if (!m_pKinectSensor || FAILED(hr))
-    {
-        SetStatusMessage(L"No ready Kinect found!", 10000, true);
-        return E_FAIL;
-    }
-
+  hr = GetDefaultKinectSensor(&m_pKinectSensor);
+  if (FAILED(hr))
+  {
     return hr;
+  }
+
+  if (m_pKinectSensor)
+  {
+    // Initialize the Kinect and get coordinate mapper and the body reader
+    IBodyFrameSource* pBodyFrameSource = NULL;
+
+    hr = m_pKinectSensor->Open();
+
+    if (SUCCEEDED(hr))
+    {
+      hr = m_pKinectSensor->get_CoordinateMapper(&m_pCoordinateMapper);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+      hr = m_pKinectSensor->get_BodyFrameSource(&pBodyFrameSource);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+      hr = pBodyFrameSource->OpenReader(&m_pBodyFrameReader);
+    }
+
+    SafeRelease(pBodyFrameSource);
+  }
+
+  if (!m_pKinectSensor || FAILED(hr))
+  {
+    SetStatusMessage(L"No ready Kinect found!", 10000, true);
+    return E_FAIL;
+  }
+
+  return hr;
 }
 
 /// <summary>
@@ -347,128 +333,129 @@ HRESULT KinectJointController::InitializeDefaultSensor()
 /// </summary>
 void KinectJointController::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
 {
-    if (m_hWnd)
+  if (m_hWnd)
+  {
+    HRESULT hr = EnsureDirect2DResources();
+
+    if (SUCCEEDED(hr) && m_pRenderTarget && m_pCoordinateMapper)
     {
-        HRESULT hr = EnsureDirect2DResources();
+      m_pRenderTarget->BeginDraw();
+      m_pRenderTarget->Clear();
 
-        if (SUCCEEDED(hr) && m_pRenderTarget && m_pCoordinateMapper)
+      RECT rct;
+      GetClientRect(GetDlgItem(m_hWnd, IDC_VIDEOVIEW), &rct);
+      int width = rct.right;
+      int height = rct.bottom;
+      for (int i = 0; i < nBodyCount; ++i)
+      {
+        IBody* pBody = ppBodies[i];
+        if (pBody)
         {
-            m_pRenderTarget->BeginDraw();
-            m_pRenderTarget->Clear();
+          BOOLEAN bTracked = false;
+          hr = pBody->get_IsTracked(&bTracked);
 
-            RECT rct;
-            GetClientRect(GetDlgItem(m_hWnd, IDC_VIDEOVIEW), &rct);
-            int width = rct.right;
-            int height = rct.bottom;
-			for (int i = 0; i < nBodyCount; ++i)
+          if (SUCCEEDED(hr) && bTracked)
+          {
+            Joint joints[JointType_Count];
+            D2D1_POINT_2F jointPoints[JointType_Count];
+            HandState leftHandState = HandState_Unknown;
+            HandState rightHandState = HandState_Unknown;
+
+            pBody->get_HandLeftState(&leftHandState);
+            pBody->get_HandRightState(&rightHandState);
+
+            hr = pBody->GetJoints(_countof(joints), joints);
+            // Get the joint orientations
+            JointOrientation orientations[JointType_Count];
+            HRESULT hr_rot = pBody->GetJointOrientations(_countof(orientations), orientations);
+            if (SUCCEEDED(hr) && SUCCEEDED(hr_rot))
             {
-                IBody* pBody = ppBodies[i];
-                if (pBody)
-                {
-                    BOOLEAN bTracked = false;
-                    hr = pBody->get_IsTracked(&bTracked);
+              SkeletonMsg udp_msg;
+              for (int j = 0; j < _countof(joints); ++j)
+              {
+                jointPoints[j] = BodyToScreen(joints[j].Position, width, height);
+                // Populate the udp_msg
+                udp_msg.joint_type[j] = joints[j].JointType;
+                udp_msg.position_x[j] = joints[j].Position.X;
+                udp_msg.position_y[j] = joints[j].Position.Y;
+                udp_msg.position_z[j] = joints[j].Position.Z;
+                udp_msg.tracking_state[j] = joints[j].TrackingState;
+                udp_msg.orientation_x[j] = orientations[j].Orientation.x;
+                udp_msg.orientation_y[j] = orientations[j].Orientation.y;
+                udp_msg.orientation_z[j] = orientations[j].Orientation.z;
+                udp_msg.orientation_w[j] = orientations[j].Orientation.w;
+              }
 
-                    if (SUCCEEDED(hr) && bTracked)
-                    {
-                        Joint joints[JointType_Count];
-                        D2D1_POINT_2F jointPoints[JointType_Count];
-                        HandState leftHandState = HandState_Unknown;
-                        HandState rightHandState = HandState_Unknown;
+              DrawBody(joints, jointPoints);
 
-                        pBody->get_HandLeftState(&leftHandState);
-                        pBody->get_HandRightState(&rightHandState);
+              DrawHand(leftHandState, jointPoints[JointType_HandLeft]);
+              DrawHand(rightHandState, jointPoints[JointType_HandRight]);
+              
+              // Complete the udp_msg
+              udp_msg.user_number = i + 1;
+              udp_msg.l_hand_state = leftHandState;
+              udp_msg.r_hand_state = rightHandState;
 
-                        hr = pBody->GetJoints(_countof(joints), joints);
-						// Get the joint orientations
-						JointOrientation orientations[JointType_Count];
-						HRESULT hr_rot = pBody->GetJointOrientations(_countof(orientations), orientations);
-						if (SUCCEEDED(hr) && SUCCEEDED(hr_rot))
-                        {
-							SkeletonMsg udp_msg;
-                            for (int j = 0; j < _countof(joints); ++j)
-                            {
-                                jointPoints[j] = BodyToScreen(joints[j].Position, width, height);
-								// Populate the udp_msg
-								udp_msg.joint_type[j] = joints[j].JointType;
-								udp_msg.position_x[j] = joints[j].Position.X;
-								udp_msg.position_y[j] = joints[j].Position.Y;
-								udp_msg.position_z[j] = joints[j].Position.Z;
-								udp_msg.tracking_state[j] = joints[j].TrackingState;
-								udp_msg.orientation_x[j] = orientations[j].Orientation.x;
-								udp_msg.orientation_y[j] = orientations[j].Orientation.y;
-								udp_msg.orientation_z[j] = orientations[j].Orientation.z;
-								udp_msg.orientation_w[j] = orientations[j].Orientation.w;
-                            }
-
-                            DrawBody(joints, jointPoints);
-
-                            DrawHand(leftHandState, jointPoints[JointType_HandLeft]);
-                            DrawHand(rightHandState, jointPoints[JointType_HandRight]);
-
-							udp_msg.user_number = i + 1;
-							udp_msg.l_hand_state = leftHandState;
-							udp_msg.r_hand_state = rightHandState;
-
-							// Send all the information through UDP
-							std::vector<boost::asio::const_buffer> buffers;
-							buffers.push_back( boost::asio::buffer(&udp_msg.user_number, sizeof(udp_msg.user_number) ) );
-							buffers.push_back( boost::asio::buffer(&udp_msg.joint_type, sizeof(udp_msg.joint_type) ) );
-							buffers.push_back( boost::asio::buffer(&udp_msg.tracking_state, sizeof(udp_msg.tracking_state) ) );
-							buffers.push_back( boost::asio::buffer(&udp_msg.position_x, sizeof(udp_msg.position_x) ) );
-							buffers.push_back( boost::asio::buffer(&udp_msg.position_y, sizeof(udp_msg.position_y) ) );
-							buffers.push_back( boost::asio::buffer(&udp_msg.position_z, sizeof(udp_msg.position_z) ) );
-							buffers.push_back( boost::asio::buffer(&udp_msg.orientation_x, sizeof(udp_msg.orientation_x) ) );
-							buffers.push_back( boost::asio::buffer(&udp_msg.orientation_y, sizeof(udp_msg.orientation_y) ) );
-							buffers.push_back( boost::asio::buffer(&udp_msg.orientation_z, sizeof(udp_msg.orientation_z) ) );
-							buffers.push_back( boost::asio::buffer(&udp_msg.orientation_w, sizeof(udp_msg.orientation_w) ) );
-							buffers.push_back( boost::asio::buffer(&udp_msg.l_hand_state, sizeof(udp_msg.l_hand_state) ) );
-							buffers.push_back( boost::asio::buffer(&udp_msg.r_hand_state, sizeof(udp_msg.r_hand_state) ) );
-							socket_->send_to(buffers, *asio_iterator_);
-                        }
-                    }
-                }
+              // Send all the information through UDP
+              std::vector<boost::asio::const_buffer> buffers;
+              buffers.push_back( boost::asio::buffer(&udp_msg.user_number, sizeof(udp_msg.user_number) ) );
+              buffers.push_back( boost::asio::buffer(&udp_msg.joint_type, sizeof(udp_msg.joint_type) ) );
+              buffers.push_back( boost::asio::buffer(&udp_msg.tracking_state, sizeof(udp_msg.tracking_state) ) );
+              buffers.push_back( boost::asio::buffer(&udp_msg.position_x, sizeof(udp_msg.position_x) ) );
+              buffers.push_back( boost::asio::buffer(&udp_msg.position_y, sizeof(udp_msg.position_y) ) );
+              buffers.push_back( boost::asio::buffer(&udp_msg.position_z, sizeof(udp_msg.position_z) ) );
+              buffers.push_back( boost::asio::buffer(&udp_msg.orientation_x, sizeof(udp_msg.orientation_x) ) );
+              buffers.push_back( boost::asio::buffer(&udp_msg.orientation_y, sizeof(udp_msg.orientation_y) ) );
+              buffers.push_back( boost::asio::buffer(&udp_msg.orientation_z, sizeof(udp_msg.orientation_z) ) );
+              buffers.push_back( boost::asio::buffer(&udp_msg.orientation_w, sizeof(udp_msg.orientation_w) ) );
+              buffers.push_back( boost::asio::buffer(&udp_msg.l_hand_state, sizeof(udp_msg.l_hand_state) ) );
+              buffers.push_back( boost::asio::buffer(&udp_msg.r_hand_state, sizeof(udp_msg.r_hand_state) ) );
+              m_pSocket->send_to(buffers, *m_asioIterator);
             }
-
-            hr = m_pRenderTarget->EndDraw();
-
-            // Device lost, need to recreate the render target
-            // We'll dispose it now and retry drawing
-            if (D2DERR_RECREATE_TARGET == hr)
-            {
-                hr = S_OK;
-                DiscardDirect2DResources();
-            }
+          }
         }
+      }
 
-        if (!m_nStartTime)
-        {
-            m_nStartTime = nTime;
-        }
+      hr = m_pRenderTarget->EndDraw();
 
-        double fps = 0.0;
-
-        LARGE_INTEGER qpcNow = {0};
-        if (m_fFreq)
-        {
-            if (QueryPerformanceCounter(&qpcNow))
-            {
-                if (m_nLastCounter)
-                {
-                    m_nFramesSinceUpdate++;
-                    fps = m_fFreq * m_nFramesSinceUpdate / double(qpcNow.QuadPart - m_nLastCounter);
-                }
-            }
-        }
-
-        WCHAR szStatusMessage[64];
-        StringCchPrintf(szStatusMessage, _countof(szStatusMessage), L" FPS = %0.2f    Time = %I64d", fps, (nTime - m_nStartTime));
-
-        if (SetStatusMessage(szStatusMessage, 1000, false))
-        {
-            m_nLastCounter = qpcNow.QuadPart;
-            m_nFramesSinceUpdate = 0;
-        }
+      // Device lost, need to recreate the render target
+      // We'll dispose it now and retry drawing
+      if (D2DERR_RECREATE_TARGET == hr)
+      {
+        hr = S_OK;
+        DiscardDirect2DResources();
+      }
     }
+
+    if (!m_nStartTime)
+    {
+      m_nStartTime = nTime;
+    }
+
+    double fps = 0.0;
+
+    LARGE_INTEGER qpcNow = {0};
+    if (m_fFreq)
+    {
+      if (QueryPerformanceCounter(&qpcNow))
+      {
+        if (m_nLastCounter)
+        {
+          m_nFramesSinceUpdate++;
+          fps = m_fFreq * m_nFramesSinceUpdate / double(qpcNow.QuadPart - m_nLastCounter);
+        }
+      }
+    }
+
+    WCHAR szStatusMessage[64];
+    StringCchPrintf(szStatusMessage, _countof(szStatusMessage), L" FPS = %0.2f  Time = %I64d", fps, (nTime - m_nStartTime));
+
+    if (SetStatusMessage(szStatusMessage, 1000, false))
+    {
+      m_nLastCounter = qpcNow.QuadPart;
+      m_nFramesSinceUpdate = 0;
+    }
+  }
 }
 
 /// <summary>
@@ -479,17 +466,17 @@ void KinectJointController::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppB
 /// <param name="bForce">force status update</param>
 bool KinectJointController::SetStatusMessage(_In_z_ WCHAR* szMessage, DWORD nShowTimeMsec, bool bForce)
 {
-    DWORD now = GetTickCount();
+  DWORD now = GetTickCount();
 
-    if (m_hWnd && (bForce || (m_nNextStatusTime <= now)))
-    {
-        SetDlgItemText(m_hWnd, IDC_STATUS, szMessage);
-        m_nNextStatusTime = now + nShowTimeMsec;
+  if (m_hWnd && (bForce || (m_nNextStatusTime <= now)))
+  {
+    SetDlgItemText(m_hWnd, IDC_STATUS, szMessage);
+    m_nNextStatusTime = now + nShowTimeMsec;
 
-        return true;
-    }
+    return true;
+  }
 
-    return false;
+  return false;
 }
 
 /// <summary>
@@ -498,46 +485,46 @@ bool KinectJointController::SetStatusMessage(_In_z_ WCHAR* szMessage, DWORD nSho
 /// <returns>S_OK if successful, otherwise an error code</returns>
 HRESULT KinectJointController::EnsureDirect2DResources()
 {
-    HRESULT hr = S_OK;
+  HRESULT hr = S_OK;
 
-    if (m_pD2DFactory && !m_pRenderTarget)
+  if (m_pD2DFactory && !m_pRenderTarget)
+  {
+    RECT rc;
+    GetWindowRect(GetDlgItem(m_hWnd, IDC_VIDEOVIEW), &rc);  
+
+    int width = rc.right - rc.left;
+    int height = rc.bottom - rc.top;
+    D2D1_SIZE_U size = D2D1::SizeU(width, height);
+    D2D1_RENDER_TARGET_PROPERTIES rtProps = D2D1::RenderTargetProperties();
+    rtProps.pixelFormat = D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE);
+    rtProps.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
+
+    // Create a Hwnd render target, in order to render to the window set in initialize
+    hr = m_pD2DFactory->CreateHwndRenderTarget(
+      rtProps,
+      D2D1::HwndRenderTargetProperties(GetDlgItem(m_hWnd, IDC_VIDEOVIEW), size),
+      &m_pRenderTarget
+    );
+
+    if (FAILED(hr))
     {
-        RECT rc;
-        GetWindowRect(GetDlgItem(m_hWnd, IDC_VIDEOVIEW), &rc);  
-
-        int width = rc.right - rc.left;
-        int height = rc.bottom - rc.top;
-        D2D1_SIZE_U size = D2D1::SizeU(width, height);
-        D2D1_RENDER_TARGET_PROPERTIES rtProps = D2D1::RenderTargetProperties();
-        rtProps.pixelFormat = D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE);
-        rtProps.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
-
-        // Create a Hwnd render target, in order to render to the window set in initialize
-        hr = m_pD2DFactory->CreateHwndRenderTarget(
-            rtProps,
-            D2D1::HwndRenderTargetProperties(GetDlgItem(m_hWnd, IDC_VIDEOVIEW), size),
-            &m_pRenderTarget
-        );
-
-        if (FAILED(hr))
-        {
-            SetStatusMessage(L"Couldn't create Direct2D render target!", 10000, true);
-            return hr;
-        }
-
-        // light green
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0.27f, 0.75f, 0.27f), &m_pBrushJointTracked);
-
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow, 1.0f), &m_pBrushJointInferred);
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green, 1.0f), &m_pBrushBoneTracked);
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 1.0f), &m_pBrushBoneInferred);
-
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red, 0.5f), &m_pBrushHandClosed);
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green, 0.5f), &m_pBrushHandOpen);
-        m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Blue, 0.5f), &m_pBrushHandLasso);
+      SetStatusMessage(L"Couldn't create Direct2D render target!", 10000, true);
+      return hr;
     }
 
-    return hr;
+    // light green
+    m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0.27f, 0.75f, 0.27f), &m_pBrushJointTracked);
+
+    m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow, 1.0f), &m_pBrushJointInferred);
+    m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green, 1.0f), &m_pBrushBoneTracked);
+    m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 1.0f), &m_pBrushBoneInferred);
+
+    m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red, 0.5f), &m_pBrushHandClosed);
+    m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green, 0.5f), &m_pBrushHandOpen);
+    m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Blue, 0.5f), &m_pBrushHandLasso);
+  }
+
+  return hr;
 }
 
 /// <summary>
@@ -545,16 +532,16 @@ HRESULT KinectJointController::EnsureDirect2DResources()
 /// </summary>
 void KinectJointController::DiscardDirect2DResources()
 {
-    SafeRelease(m_pRenderTarget);
+  SafeRelease(m_pRenderTarget);
 
-    SafeRelease(m_pBrushJointTracked);
-    SafeRelease(m_pBrushJointInferred);
-    SafeRelease(m_pBrushBoneTracked);
-    SafeRelease(m_pBrushBoneInferred);
+  SafeRelease(m_pBrushJointTracked);
+  SafeRelease(m_pBrushJointInferred);
+  SafeRelease(m_pBrushBoneTracked);
+  SafeRelease(m_pBrushBoneInferred);
 
-    SafeRelease(m_pBrushHandClosed);
-    SafeRelease(m_pBrushHandOpen);
-    SafeRelease(m_pBrushHandLasso);
+  SafeRelease(m_pBrushHandClosed);
+  SafeRelease(m_pBrushHandOpen);
+  SafeRelease(m_pBrushHandLasso);
 }
 
 /// <summary>
@@ -566,14 +553,14 @@ void KinectJointController::DiscardDirect2DResources()
 /// <returns>point in screen-space</returns>
 D2D1_POINT_2F KinectJointController::BodyToScreen(const CameraSpacePoint& bodyPoint, int width, int height)
 {
-    // Calculate the body's position on the screen
-    DepthSpacePoint depthPoint = {0};
-    m_pCoordinateMapper->MapCameraPointToDepthSpace(bodyPoint, &depthPoint);
+  // Calculate the body's position on the screen
+  DepthSpacePoint depthPoint = {0};
+  m_pCoordinateMapper->MapCameraPointToDepthSpace(bodyPoint, &depthPoint);
 
-    float screenPointX = static_cast<float>(depthPoint.X * width) / cDepthWidth;
-    float screenPointY = static_cast<float>(depthPoint.Y * height) / cDepthHeight;
+  float screenPointX = static_cast<float>(depthPoint.X * width) / cDepthWidth;
+  float screenPointY = static_cast<float>(depthPoint.Y * height) / cDepthHeight;
 
-    return D2D1::Point2F(screenPointX, screenPointY);
+  return D2D1::Point2F(screenPointX, screenPointY);
 }
 
 /// <summary>
@@ -583,56 +570,56 @@ D2D1_POINT_2F KinectJointController::BodyToScreen(const CameraSpacePoint& bodyPo
 /// <param name="pJointPoints">joint positions converted to screen space</param>
 void KinectJointController::DrawBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints)
 {
-    // Draw the bones
+  // Draw the bones
 
-    // Torso
-    DrawBone(pJoints, pJointPoints, JointType_Head, JointType_Neck);
-    DrawBone(pJoints, pJointPoints, JointType_Neck, JointType_SpineShoulder);
-    DrawBone(pJoints, pJointPoints, JointType_SpineShoulder, JointType_SpineMid);
-    DrawBone(pJoints, pJointPoints, JointType_SpineMid, JointType_SpineBase);
-    DrawBone(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderRight);
-    DrawBone(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderLeft);
-    DrawBone(pJoints, pJointPoints, JointType_SpineBase, JointType_HipRight);
-    DrawBone(pJoints, pJointPoints, JointType_SpineBase, JointType_HipLeft);
-    
-    // Right Arm    
-    DrawBone(pJoints, pJointPoints, JointType_ShoulderRight, JointType_ElbowRight);
-    DrawBone(pJoints, pJointPoints, JointType_ElbowRight, JointType_WristRight);
-    DrawBone(pJoints, pJointPoints, JointType_WristRight, JointType_HandRight);
-    DrawBone(pJoints, pJointPoints, JointType_HandRight, JointType_HandTipRight);
-    DrawBone(pJoints, pJointPoints, JointType_WristRight, JointType_ThumbRight);
+  // Torso
+  DrawBone(pJoints, pJointPoints, JointType_Head, JointType_Neck);
+  DrawBone(pJoints, pJointPoints, JointType_Neck, JointType_SpineShoulder);
+  DrawBone(pJoints, pJointPoints, JointType_SpineShoulder, JointType_SpineMid);
+  DrawBone(pJoints, pJointPoints, JointType_SpineMid, JointType_SpineBase);
+  DrawBone(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderRight);
+  DrawBone(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderLeft);
+  DrawBone(pJoints, pJointPoints, JointType_SpineBase, JointType_HipRight);
+  DrawBone(pJoints, pJointPoints, JointType_SpineBase, JointType_HipLeft);
+  
+  // Right Arm  
+  DrawBone(pJoints, pJointPoints, JointType_ShoulderRight, JointType_ElbowRight);
+  DrawBone(pJoints, pJointPoints, JointType_ElbowRight, JointType_WristRight);
+  DrawBone(pJoints, pJointPoints, JointType_WristRight, JointType_HandRight);
+  DrawBone(pJoints, pJointPoints, JointType_HandRight, JointType_HandTipRight);
+  DrawBone(pJoints, pJointPoints, JointType_WristRight, JointType_ThumbRight);
 
-    // Left Arm
-    DrawBone(pJoints, pJointPoints, JointType_ShoulderLeft, JointType_ElbowLeft);
-    DrawBone(pJoints, pJointPoints, JointType_ElbowLeft, JointType_WristLeft);
-    DrawBone(pJoints, pJointPoints, JointType_WristLeft, JointType_HandLeft);
-    DrawBone(pJoints, pJointPoints, JointType_HandLeft, JointType_HandTipLeft);
-    DrawBone(pJoints, pJointPoints, JointType_WristLeft, JointType_ThumbLeft);
+  // Left Arm
+  DrawBone(pJoints, pJointPoints, JointType_ShoulderLeft, JointType_ElbowLeft);
+  DrawBone(pJoints, pJointPoints, JointType_ElbowLeft, JointType_WristLeft);
+  DrawBone(pJoints, pJointPoints, JointType_WristLeft, JointType_HandLeft);
+  DrawBone(pJoints, pJointPoints, JointType_HandLeft, JointType_HandTipLeft);
+  DrawBone(pJoints, pJointPoints, JointType_WristLeft, JointType_ThumbLeft);
 
-    // Right Leg
-    DrawBone(pJoints, pJointPoints, JointType_HipRight, JointType_KneeRight);
-    DrawBone(pJoints, pJointPoints, JointType_KneeRight, JointType_AnkleRight);
-    DrawBone(pJoints, pJointPoints, JointType_AnkleRight, JointType_FootRight);
+  // Right Leg
+  DrawBone(pJoints, pJointPoints, JointType_HipRight, JointType_KneeRight);
+  DrawBone(pJoints, pJointPoints, JointType_KneeRight, JointType_AnkleRight);
+  DrawBone(pJoints, pJointPoints, JointType_AnkleRight, JointType_FootRight);
 
-    // Left Leg
-    DrawBone(pJoints, pJointPoints, JointType_HipLeft, JointType_KneeLeft);
-    DrawBone(pJoints, pJointPoints, JointType_KneeLeft, JointType_AnkleLeft);
-    DrawBone(pJoints, pJointPoints, JointType_AnkleLeft, JointType_FootLeft);
+  // Left Leg
+  DrawBone(pJoints, pJointPoints, JointType_HipLeft, JointType_KneeLeft);
+  DrawBone(pJoints, pJointPoints, JointType_KneeLeft, JointType_AnkleLeft);
+  DrawBone(pJoints, pJointPoints, JointType_AnkleLeft, JointType_FootLeft);
 
-    // Draw the joints
-    for (int i = 0; i < JointType_Count; ++i)
+  // Draw the joints
+  for (int i = 0; i < JointType_Count; ++i)
+  {
+    D2D1_ELLIPSE ellipse = D2D1::Ellipse(pJointPoints[i], c_JointThickness, c_JointThickness);
+
+    if (pJoints[i].TrackingState == TrackingState_Inferred)
     {
-        D2D1_ELLIPSE ellipse = D2D1::Ellipse(pJointPoints[i], c_JointThickness, c_JointThickness);
-
-        if (pJoints[i].TrackingState == TrackingState_Inferred)
-        {
-            m_pRenderTarget->FillEllipse(ellipse, m_pBrushJointInferred);
-        }
-        else if (pJoints[i].TrackingState == TrackingState_Tracked)
-        {
-            m_pRenderTarget->FillEllipse(ellipse, m_pBrushJointTracked);
-        }
+      m_pRenderTarget->FillEllipse(ellipse, m_pBrushJointInferred);
     }
+    else if (pJoints[i].TrackingState == TrackingState_Tracked)
+    {
+      m_pRenderTarget->FillEllipse(ellipse, m_pBrushJointTracked);
+    }
+  }
 }
 
 /// <summary>
@@ -645,30 +632,30 @@ void KinectJointController::DrawBody(const Joint* pJoints, const D2D1_POINT_2F* 
 /// <param name="joint1">other joint of the bone to draw</param>
 void KinectJointController::DrawBone(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, JointType joint0, JointType joint1)
 {
-    TrackingState joint0State = pJoints[joint0].TrackingState;
-    TrackingState joint1State = pJoints[joint1].TrackingState;
+  TrackingState joint0State = pJoints[joint0].TrackingState;
+  TrackingState joint1State = pJoints[joint1].TrackingState;
 
-    // If we can't find either of these joints, exit
-    if ((joint0State == TrackingState_NotTracked) || (joint1State == TrackingState_NotTracked))
-    {
-        return;
-    }
+  // If we can't find either of these joints, exit
+  if ((joint0State == TrackingState_NotTracked) || (joint1State == TrackingState_NotTracked))
+  {
+    return;
+  }
 
-    // Don't draw if both points are inferred
-    if ((joint0State == TrackingState_Inferred) && (joint1State == TrackingState_Inferred))
-    {
-        return;
-    }
+  // Don't draw if both points are inferred
+  if ((joint0State == TrackingState_Inferred) && (joint1State == TrackingState_Inferred))
+  {
+    return;
+  }
 
-    // We assume all drawn bones are inferred unless BOTH joints are tracked
-    if ((joint0State == TrackingState_Tracked) && (joint1State == TrackingState_Tracked))
-    {
-        m_pRenderTarget->DrawLine(pJointPoints[joint0], pJointPoints[joint1], m_pBrushBoneTracked, c_TrackedBoneThickness);
-    }
-    else
-    {
-        m_pRenderTarget->DrawLine(pJointPoints[joint0], pJointPoints[joint1], m_pBrushBoneInferred, c_InferredBoneThickness);
-    }
+  // We assume all drawn bones are inferred unless BOTH joints are tracked
+  if ((joint0State == TrackingState_Tracked) && (joint1State == TrackingState_Tracked))
+  {
+    m_pRenderTarget->DrawLine(pJointPoints[joint0], pJointPoints[joint1], m_pBrushBoneTracked, c_TrackedBoneThickness);
+  }
+  else
+  {
+    m_pRenderTarget->DrawLine(pJointPoints[joint0], pJointPoints[joint1], m_pBrushBoneInferred, c_InferredBoneThickness);
+  }
 }
 
 /// <summary>
@@ -678,20 +665,20 @@ void KinectJointController::DrawBone(const Joint* pJoints, const D2D1_POINT_2F* 
 /// <param name="handPosition">position of the hand</param>
 void KinectJointController::DrawHand(HandState handState, const D2D1_POINT_2F& handPosition)
 {
-    D2D1_ELLIPSE ellipse = D2D1::Ellipse(handPosition, c_HandSize, c_HandSize);
+  D2D1_ELLIPSE ellipse = D2D1::Ellipse(handPosition, c_HandSize, c_HandSize);
 
-    switch (handState)
-    {
-        case HandState_Closed:
-            m_pRenderTarget->FillEllipse(ellipse, m_pBrushHandClosed);
-            break;
+  switch (handState)
+  {
+    case HandState_Closed:
+      m_pRenderTarget->FillEllipse(ellipse, m_pBrushHandClosed);
+      break;
 
-        case HandState_Open:
-            m_pRenderTarget->FillEllipse(ellipse, m_pBrushHandOpen);
-            break;
+    case HandState_Open:
+      m_pRenderTarget->FillEllipse(ellipse, m_pBrushHandOpen);
+      break;
 
-        case HandState_Lasso:
-            m_pRenderTarget->FillEllipse(ellipse, m_pBrushHandLasso);
-            break;
-    }
+    case HandState_Lasso:
+      m_pRenderTarget->FillEllipse(ellipse, m_pBrushHandLasso);
+      break;
+  }
 }
