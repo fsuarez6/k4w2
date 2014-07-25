@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package>
+  <name>k4w2_interface</name>
+  <description>The k4w2_interface package</description>
+  
+  <version>0.0.0</version>
+  <maintainer email="fsuarez@todo.todo">fsuarez</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>k4w2_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>urdfdom_py</build_depend>
+  
+  <run_depend>k4w2_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>urdfdom_py</run_depend>
+
+</package>

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+  <name>k4w2</name>
+  <description>
+    The k4w2 metapackage
+  </description>
+  
+  <version>0.0.0</version>
+
+  <maintainer email="fsuarez6@gmail.com">Francisco Suarez-Ruiz</maintainer>
+  <license>BSD</license>
+  <url type="website">https://github.com/fsuarez6/k4w2</url>
+  <url type="repository">https://github.com/fsuarez6/k4w2</url>
+  <author>Francisco Suarez-Ruiz</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>k4w2_msgs</run_depend>
+  <run_depend>k4w2_interface</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+
+</package>
