@@ -136,10 +136,10 @@ int KinectJointController::Run(HINSTANCE hInstance, int nCmdShow)
   ShowWindow(hWndApp, nCmdShow);
 
   // Initialize socket client
-  socket_ = new udp::socket(m_ioService, udp::endpoint(udp::v4(), 0));
+  m_pSocket = new udp::socket(m_ioService, udp::endpoint(udp::v4(), 0));
   udp::resolver resolver(m_ioService);
   udp::resolver::query query(udp::v4(), "10.243.44.150", "6565");
-  asio_iterator_ = resolver.resolve(query);
+  m_asioIterator = resolver.resolve(query);
   
   // TODO: Notify when the socket creation fails
   
