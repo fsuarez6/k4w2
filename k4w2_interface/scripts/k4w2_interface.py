@@ -19,9 +19,14 @@
 import rospy
 # UDP staff
 import socket, time
+# Orientation staff
+import numpy as np
+from math import sin, cos, acos, atan2
+import PyKDL as KDL
+from tf_conversions import posemath
 # Messages
 from geometry_msgs.msg import Quaternion, Point, Pose, PoseStamped
-from k4w2_msgs.msg import SkeletonRaw, SkeletonState
+from k4w2_msgs.msg import SkeletonRaw, SkeletonState, RPY
 
 sr = SkeletonRaw()
 
@@ -39,12 +44,17 @@ class K4W2Interface():
     self.read_socket.bind(('', self.read_port))
     rospy.loginfo('UDP Socket listening on port [%d]' % (self.read_port))
     # Set up a publishers
-    skeleton = rospy.Publisher('k4w2/skeleton', SkeletonState)
+    skeleton = rospy.Publisher('kinect/skeleton', SkeletonState)
+    
+    # TODO: Extra publisher for debugging
+    pose_pub = rospy.Publisher('kinect/pose_test', PoseStamped)
+    l_shoulder_pub = rospy.Publisher('/kinect/l_shoulder', RPY)
+    l_elbow_pub = rospy.Publisher('/kinect/l_elbow', RPY)
     
     while not rospy.is_shutdown():
       raw_msg = SkeletonRaw()
       skeleton_msg = SkeletonState()
-      skeleton_msg.header.frame_id = 'world'
+      skeleton_msg.header.frame_id = 'base'
       data = self.recv_timeout()
       if data:
         raw_msg.deserialize(data)
@@ -60,7 +70,29 @@ class K4W2Interface():
           pose.orientation = Quaternion(raw_msg.orientation_x[i], raw_msg.orientation_y[i], raw_msg.orientation_z[i], raw_msg.orientation_w[i])
           skeleton_msg.pose.append(pose)
         skeleton_msg.header.stamp = rospy.Time.now()
+        # Publish skeleton state
         skeleton.publish(skeleton_msg)
+        
+        # TODO: Extra publisher for debugging
+        xr = skeleton_msg.pose[sr.ElbowLeft].position.x - skeleton_msg.pose[sr.ShoulderLeft].position.x
+        yr = skeleton_msg.pose[sr.ElbowLeft].position.y - skeleton_msg.pose[sr.ShoulderLeft].position.y
+        zr = skeleton_msg.pose[sr.ElbowLeft].position.z - skeleton_msg.pose[sr.ShoulderLeft].position.z
+        xe = skeleton_msg.pose[sr.WristLeft].position.x - skeleton_msg.pose[sr.ElbowLeft].position.x
+        ye = skeleton_msg.pose[sr.WristLeft].position.y - skeleton_msg.pose[sr.ElbowLeft].position.y
+        ze = skeleton_msg.pose[sr.WristLeft].position.z - skeleton_msg.pose[sr.ElbowLeft].position.z
+        a = KDL.Vector(xe, ye, ze)
+        b = KDL.Vector(xr, yr, zr)
+        #~ angle = acos(KDL.dot(a, b) / (a.Norm() * b.Norm()))
+        angle = 2 * atan2((a * b.Norm() - a.Norm() * b).Norm(), (a * b.Norm() + a.Norm() * b).Norm())
+        axis = (a * b) / (a.Norm() * b.Norm())
+        w = cos(angle / 2)
+        v = sin(angle / 2) * axis
+        rotation = KDL.Rotation.Rot(axis, angle)
+        pose_msg = PoseStamped()
+        pose_msg.header = skeleton_msg.header
+        pose_msg.pose.orientation = Quaternion(v.x(), v.y(), v.z(), w)
+        pose_pub.publish(pose_msg)
+        l_shoulder_pub.publish(RPY(*rotation.GetRPY()))
         
 
   def recv_timeout(self, timeout=0.01):
